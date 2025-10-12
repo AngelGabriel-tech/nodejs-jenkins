@@ -1,105 +1,45 @@
 pipeline {
     agent any
+
     stages {
-        agent any
-        stages {
-            stage('Install') {
-                steps {
-                    echo 'Install: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
-            }
-
-            stage('Build') {
-                steps {
-                    echo 'Build: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
-            }
-
-            stage('Test') {
-                steps {
-                    echo 'Test: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
-            }
-
-            stage('Start') {
-                steps {
-                    echo 'Start: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
-            }
-
-            stage('Deploy') {
-                steps {
-                    echo 'Deploy: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
-            }
-
-            stage('Stop') {
-                steps {
-                    echo 'Stop: npm install, start, stop'
-                    sh '''
-                        npm install --no-audit --no-fund
-                        nohup npm start > server.log 2>&1 &
-                        sleep 1
-                        npm stop || true
-                    '''
-                }
+        stage('Install') {
+            steps {
+                echo '📦 Installing dependencies...'
+                sh 'npm install --no-audit --no-fund'
             }
         }
-        post {
-            always {
-                echo 'Post: ensure npm stop'
-                sh 'npm stop || true'
+
+        stage('Start') {
+            steps {
+                echo '🚀 Starting the Node.js application...'
+                // Start in background and redirect logs
+                sh '''
+                    nohup npm start > server.log 2>&1 &
+                    sleep 3
+                    echo "=== Server log output ==="
+                    tail -n 20 server.log
+                '''
+            }
+        }
+
+        stage('Stop') {
+            steps {
+                echo '🛑 Stopping the Node.js application...'
+                // Stop gracefully if npm stop exists, else kill process manually
+                sh '''
+                    npm stop || pkill -f "node app/server.js" || true
+                    echo "=== Server stopped successfully ==="
+                '''
             }
         }
     }
-                        sh "npm stop || true"
-                    } else {
-                        bat "npm stop || exit 0"
-                    }
-                }
-            }
-        }
-    }
+
     post {
         always {
-            echo 'Post: ensuring demo server is stopped'
-            script {
-                if (isUnix()) {
-                    sh "npm stop || true"
-                } else {
-                    bat "npm stop || exit 0"
-                }
-            }
+            echo '🧹 Cleanup: ensuring the app is stopped'
+            sh 'npm stop || pkill -f "node app/server.js" || true'
+            echo '📜 Displaying final log snapshot:'
+            sh 'tail -n 30 server.log || true'
         }
     }
 }
