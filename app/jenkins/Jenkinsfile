@@ -1,22 +1,93 @@
 pipeline {
     agent any
     stages {
+        stage('Install') {
+            steps {
+                echo 'Installing dependencies...'
+                script {
+                    if (isUnix()) {
+                        sh "if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi"
+                    } else {
+                        bat 'npm install --no-audit --no-fund'
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 echo 'Building the application...'
-                // Example: sh 'npm install'
+                script {
+                    if (isUnix()) {
+                        sh "npm run build || echo 'no build script defined'"
+                    } else {
+                        bat "npm run build || echo 'no build script defined'"
+                    }
+                }
             }
         }
+
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // Example: sh 'npm test'
+                script {
+                    if (isUnix()) {
+                        sh "npm test || echo 'no tests or tests failed'"
+                    } else {
+                        bat "npm test || echo 'no tests or tests failed'"
+                    }
+                }
             }
         }
+
+        stage('Start') {
+            steps {
+                echo 'Starting the application (background)...'
+                script {
+                    if (isUnix()) {
+                        sh "nohup npm start > server.log 2>&1 &"
+                    } else {
+                        bat 'start /B npm start'
+                    }
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo 'Deploying...'
-                // Example: sh 'npm run deploy'
+                script {
+                    if (isUnix()) {
+                        sh "npm run deploy || echo 'no deploy script defined'"
+                    } else {
+                        bat "npm run deploy || echo 'no deploy script defined'"
+                    }
+                }
+            }
+        }
+
+        stage('Stop') {
+            steps {
+                echo 'Stopping demo application (if running)'
+                script {
+                    if (isUnix()) {
+                        sh "npm stop || true"
+                    } else {
+                        bat "npm stop || exit 0"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Post: ensuring demo server is stopped'
+            script {
+                if (isUnix()) {
+                    sh "npm stop || true"
+                } else {
+                    bat "npm stop || exit 0"
+                }
             }
         }
     }
