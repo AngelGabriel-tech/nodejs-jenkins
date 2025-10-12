@@ -1,0 +1,29 @@
+{
+  "name": "nodejs-app",
+  "version": "1.0.3",
+  "description": "Node.js application with Express and Pino logging",
+  "main": "app/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app/server.js",
+    "build": "npm run clean && npm run copy-files",
+    "clean": "if exist dist rmdir /s /q dist",
+    "copy-files": "mkdir dist && xcopy app dist\\app\\ /E /I /Y && copy package*.json dist\\",
+    "prepublishOnly": "npm run build",
+    "publish:nexus": "npm publish"
+  },
+  "author": "",
+  "license": "ISC",
+  "files": [
+    "app/",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "registry": "http://172.202.28.224:8081/repository/demo-npm-hosted/"
+  },
+  "dependencies": {
+    "express": "4.18.2",
+    "pino": "8.11.0"
+  }
+}

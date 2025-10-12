@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Node App - Jenkins Teaching Demo</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Node App - Jenkins Teaching Demo</h1>
+    <p>Use this small site to teach Jenkins pipelines and CI/CD concepts.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Quick links</h2>
+      <ul>
+        <li><a href="/api/info">/api/info (JSON info)</a></li>
+        <li><a href="/api/jenkinsfile">/api/jenkinsfile (raw Jenkinsfile)</a></li>
+        <li><a href="/jenkins">/jenkins (Jenkins tutorial page)</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Trigger a demo pipeline</h2>
+      <p>Send a POST to <code>/api/trigger-pipeline</code> with JSON, or use the button below to simulate a trigger.</p>
+      <button id="trigger">Trigger demo pipeline</button>
+      <pre id="result"></pre>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById('trigger').addEventListener('click', async () => {
+      const resEl = document.getElementById('result');
+      resEl.textContent = 'Sending request...';
+      try {
+        const resp = await fetch('/api/trigger-pipeline', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ triggeredBy: 'web-ui', time: new Date().toISOString() })
+        });
+        const data = await resp.json();
+        resEl.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        resEl.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Jenkins Tutorial</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Jenkins Tutorial</h1>
+    <p>A minimal walk-through to teach Jenkins using this repository.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>What you'll find here</h2>
+      <ul>
+        <li>A sample <code>Jenkinsfile</code> available at <a href="/api/jenkinsfile">/api/jenkinsfile</a></li>
+        <li>An example pipeline trigger endpoint: <code>/api/trigger-pipeline</code></li>
+        <li>Steps to configure a Jenkins job using this repo are below.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Suggested classroom exercise</h2>
+      <ol>
+        <li>Fork or clone this repository into your SCM.</li>
+        <li>Create a new Jenkins Pipeline job and point it at the repository.
+        Choose "Pipeline script from SCM" and select your branch.</li>
+        <li>Use the sample <code>Jenkinsfile</code> to run a basic Build/Test/Deploy sequence.</li>
+        <li>Optionally, configure a webhook from your SCM to hit <code>/api/trigger-pipeline</code> to simulate external triggers.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Notes</h2>
+      <p>This app also exposes a small UI to manually trigger a demo pipeline.</p>
+    </section>
+  </main>
+</body>
+</html>
