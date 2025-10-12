@@ -4,8 +4,9 @@
   "description": "Node.js application with Express and Pino logging",
   "main": "app/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app/server.js",
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "start": "node ./scripts/start-server.js",
+  "stop": "node ./scripts/stop-server.js",
     "build": "npm run clean && npm run copy-files",
     "clean": "if exist dist rmdir /s /q dist",
     "copy-files": "mkdir dist && xcopy app dist\\app\\ /E /I /Y && copy package*.json dist\\",
