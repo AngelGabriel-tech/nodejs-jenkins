@@ -8,14 +8,14 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                echo '📦 Installing dependencies...'
+                echo 'Installing dependencies...'
                 sh 'npm install --no-audit --no-fund'
             }
         }
 
         stage('Start') {
             steps {
-                echo '🚀 Starting the Node.js application...'
+                echo 'Starting the Node.js application...'
                 sh '''
                     nohup npm start > server.log 2>&1 &
                     sleep 3
@@ -27,7 +27,7 @@ pipeline {
 
         stage('Stop') {
             steps {
-                echo '🛑 Stopping the Node.js application...'
+                echo 'Stopping the Node.js application...'
                 sh '''
                     npm stop || pkill -f "node app/server.js" || true
                     echo "=== Server stopped successfully ==="
@@ -38,9 +38,9 @@ pipeline {
 
     post {
         always {
-            echo '🧹 Cleanup: ensuring the app is stopped'
+            echo 'Cleanup: ensuring the app is stopped'
             sh 'npm stop || pkill -f "node app/server.js" || true'
-            echo '📜 Displaying final log snapshot:'
+            echo 'Displaying final log snapshot:'
             sh 'tail -n 30 server.log || true'
         }
     }
