@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'nodejs-project'
+    }
+
     stages {
         stage('Install') {
             steps {
@@ -12,7 +16,6 @@ pipeline {
         stage('Start') {
             steps {
                 echo '🚀 Starting the Node.js application...'
-                // Start in background and redirect logs
                 sh '''
                     nohup npm start > server.log 2>&1 &
                     sleep 3
@@ -25,7 +28,6 @@ pipeline {
         stage('Stop') {
             steps {
                 echo '🛑 Stopping the Node.js application...'
-                // Stop gracefully if npm stop exists, else kill process manually
                 sh '''
                     npm stop || pkill -f "node app/server.js" || true
                     echo "=== Server stopped successfully ==="
