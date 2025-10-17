@@ -2,3 +2,10 @@
 {"level":30,"time":"2025-10-12T19:14:00.323Z","pid":9476,"hostname":"DESKTOP-ICOIA99","msg":"This is some great stuff"}
 {"level":30,"time":"2025-10-12T19:14:00.323Z","pid":9476,"hostname":"DESKTOP-ICOIA99","msg":"Some more entries for our logging"}
 {"level":30,"time":"2025-10-12T19:14:00.329Z","pid":9476,"hostname":"DESKTOP-ICOIA99","msg":"app listening on port 3000!"}
+{"level":30,"time":"2025-10-17T18:29:16.906Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"hello elastic world"}
+{"level":30,"time":"2025-10-17T18:29:16.908Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"This is some great stuff"}
+{"level":30,"time":"2025-10-17T18:29:16.909Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"Some more entries for our logging"}
+{"level":30,"time":"2025-10-17T18:29:16.920Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"app listening on port 3000!"}
+{"level":30,"time":"2025-10-17T18:31:39.771Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"Received request to /api/info"}
+{"level":30,"time":"2025-10-17T18:31:46.332Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"Serving Jenkinsfile content"}
+{"level":30,"time":"2025-10-17T18:32:22.783Z","pid":14180,"hostname":"DESKTOP-ICOIA99","msg":"Received request to /api/info"}

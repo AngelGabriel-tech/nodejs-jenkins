@@ -1,47 +1,38 @@
 pipeline {
-    agent {
-        dockerContainer {
-            image 'node:18-bullseye'
-        }
-    }
-
+    agent any
     stages {
-        stage('Install') {
+        stage('Build') {
             steps {
-                echo 'Installing dependencies...'
-                sh 'npm install --no-audit --no-fund'
+                echo 'Installing dependencies (linux-only)'
+                sh "npm install --no-audit --no-fund"
             }
         }
 
-        stage('Start') {
-            steps {
-                echo 'Starting the Node.js application...'
-                sh '''
-                    nohup npm start > server.log 2>&1 &
-                    sleep 3
-                    echo "=== Server log output ==="
-                    tail -n 20 server.log
-                '''
-            }
-        }
+                stage('Start') {
+                        steps {
+                                echo 'Starting application (background)'
+                                sh '''
+                                    mkdir -p tmp
+                                    nohup npm start > server.log 2>&1 &
+                                    echo $! > tmp/server.pid
+                                    sleep 2
+                                '''
+                        }
+                }
 
-        stage('Stop') {
+        stage('Deploy') {
             steps {
-                echo 'Stopping the Node.js application...'
+                echo 'Deploy step: stopping the application'
                 sh '''
-                    npm stop || pkill -f "node app/server.js" || true
-                    echo "=== Server stopped successfully ==="
+                  npm stop || ( [ -f tmp/server.pid ] && kill -TERM $(cat tmp/server.pid) ) || true
                 '''
             }
         }
     }
-
     post {
         always {
-            echo 'Cleanup: ensuring the app is stopped'
-            sh 'npm stop || pkill -f "node app/server.js" || true'
-            echo 'Displaying final log snapshot:'
-            sh 'tail -n 30 server.log || true'
+            echo 'Post: ensure npm stop is called'
+            sh 'npm stop || true'
         }
     }
 }
