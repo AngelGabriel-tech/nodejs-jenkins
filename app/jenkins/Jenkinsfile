@@ -1,8 +1,9 @@
 pipeline {
-    agent any
-
-    tools {
-        nodejs 'nodejs-job'
+    agent {
+        docker {
+            image 'node:18-bullseye'
+            args '-u root:root'
+        }
     }
 
     stages {
