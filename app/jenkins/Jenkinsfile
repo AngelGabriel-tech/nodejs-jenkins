@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(name: 'STOP_APP', defaultValue: false, description: 'If true, pipeline will run the Stop stage after Start. Default: false')
+    }
+
     tools {
         nodejs 'nodejs-project'
     }
@@ -26,6 +30,9 @@ pipeline {
         }
 
         stage('Stop') {
+            when {
+                expression { return params.STOP_APP == true }
+            }
             steps {
                 echo 'Stopping the Node.js application...'
                 sh '''
@@ -38,10 +45,9 @@ pipeline {
 
     post {
         always {
-            echo 'Cleanup: ensuring the app is stopped'
-            sh 'npm stop || pkill -f "node app/server.js" || true'
-            echo 'Displaying final log snapshot:'
-            sh 'tail -n 30 server.log || true'
+            echo 'Post-build: show a final log snapshot (no automatic stop)'
+            sh 'echo "--- Tail server.out.log (if present) ---" || true'
+            sh 'tail -n 30 server.out.log || tail -n 30 server.log || true'
         }
     }
 }
