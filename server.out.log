@@ -1,0 +1,7 @@
+{"level":30,"time":"2025-10-18T18:44:42.804Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"hello elastic world"}
+{"level":30,"time":"2025-10-18T18:44:42.807Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"This is some great stuff"}
+{"level":30,"time":"2025-10-18T18:44:42.807Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"Some more entries for our logging"}
+{"level":30,"time":"2025-10-18T18:44:42.822Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"app listening on port 3000!"}
+{"level":30,"time":"2025-10-18T18:45:28.481Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"Received request to /api/info"}
+{"level":30,"time":"2025-10-18T18:45:31.939Z","pid":19676,"hostname":"DESKTOP-ICOIA99","msg":"Serving Jenkinsfile content"}
+{"level":30,"time":"2025-10-18T18:45:43.834Z","pid":19676,"hostname":"DESKTOP-ICOIA99","payload":{"triggeredBy":"web-ui","time":"2025-10-18T18:45:43.787Z"},"msg":"Received pipeline trigger request"}
