@@ -11,26 +11,16 @@ pipeline {
           def remote = "azureuser@${params.TARGET_IP}"
           def remoteDir = "/opt/node-app"
           withCredentials([sshUserPrivateKey(credentialsId: 'deploy-to-vm', keyFileVariable: 'SSH_KEY')]) {
+            // compute stop flag here to avoid interpolating credentials
+            def stopFlag = params.STOP_APP ? 'true' : 'false'
             sh """
               set -e
               # ensure target dir exists
-              ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${remote} 'mkdir -p ${remoteDir}'
-              # sync workspace to remote (rsync recommended)
-              rsync -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" -av --delete $WORKSPACE/ ${remote}:${remoteDir}/
-              # run remote deploy commands
-              ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${remote} <<'EOF'
-                set -e
-                cd ${remoteDir}
-                npm ci --no-audit --no-fund
-                if [ "${params.STOP_APP}" = "true" ]; then
-                  npm run stop || pkill -f "node app/server.js" || true
-                fi
-                # start app (detached)
-                nohup npm start > server.out.log 2>&1 &
-                sleep 2
-                echo "=== Remote app logs ==="
-                tail -n 20 server.out.log || true
-              EOF
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'mkdir -p ${remoteDir}'
+              # sync workspace to remote (do not preserve owner/group/permissions)
+              rsync -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" -rlptD --no-owner --no-group --no-perms --delete $WORKSPACE/ ${remote}:${remoteDir}/
+              # run remote deploy commands (single ssh command to avoid heredoc/indent issues)
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'cd ${remoteDir} && npm ci --no-audit --no-fund && if [ "${stopFlag}" = "true" ]; then npm run stop || pkill -f "node app/server.js" || true; fi && nohup npm start > server.out.log 2>&1 & sleep 2 && echo "=== Remote app logs ===" && tail -n 20 server.out.log || true'
             """
           }
         }
