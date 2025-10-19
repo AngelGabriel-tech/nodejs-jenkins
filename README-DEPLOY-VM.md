@@ -21,14 +21,13 @@ Replace placeholders:
 Run the following on the target VM:
 
 ```bash
-# create deploy user and install Node/Git/rsync
-sudo adduser --disabled-password --gecos "" deploy
-sudo usermod -aG sudo,adm deploy      # optional
+#  install Node/Git/rsync
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get update
 sudo apt-get install -y nodejs npm git rsync build-essential
 sudo mkdir -p /opt/node-app
-sudo chown deploy:deploy /opt/node-app
+sudo chown azureuser:azureuser /opt/node-app
+sudo chmod 755 /opt/node-app
 
 # allow port 3000
 sudo ufw allow OpenSSH
@@ -48,10 +47,10 @@ On the Jenkins host (or wherever you create the keys):
 ssh-keygen -t ed25519 -f jenkins-deploy-key -N ""
 
 # copy public key to VM (replace IP and user)
-ssh-copy-id -i jenkins-deploy-key.pub deploy@<VM_IP>
+ssh-copy-id -i jenkins-deploy-key.pub azureuser@<VM_IP>
 
 # test the connection
-ssh -i jenkins-deploy-key deploy@<VM_IP> 'echo "SSH to VM OK"; whoami; pwd'
+ssh -i jenkins-deploy-key azureuser@<VM_IP> 'echo "SSH to VM OK"; whoami; pwd'
 ```
 If `ssh-copy-id` is not available, append the public key to `/home/deploy/.ssh/authorized_keys` on the VM.
 
@@ -60,7 +59,7 @@ If `ssh-copy-id` is not available, append the public key to `/home/deploy/.ssh/a
 ## 3) Add SSH credential in Jenkins
 1. Jenkins → Credentials → System → Global credentials → Add Credentials
 2. Kind: **SSH Username with private key**
-   - Username: `deploy`
+   - Username: `azureuser`
    - Private Key: Enter directly (paste contents of `jenkins-deploy-key` private key)
 3. Save
 
@@ -73,7 +72,7 @@ Copy this pipeline into your Jenkins job or the repo Jenkinsfile. It syncs the w
 pipeline {
   agent any
   parameters {
-    string(name: 'TARGET_IP', defaultValue: '<VM_IP>', description: 'Target VM IP or hostname')
+    string(name: 'TARGET_IP', defaultValue: '172.212.218.66', description: 'Target VM IP or hostname')
     booleanParam(name: 'STOP_APP', defaultValue: false, description: 'If true, stop the remote app after run')
   }
   stages {
@@ -83,26 +82,16 @@ pipeline {
           def remote = "azureuser@${params.TARGET_IP}"
           def remoteDir = "/opt/node-app"
           withCredentials([sshUserPrivateKey(credentialsId: 'deploy-to-vm', keyFileVariable: 'SSH_KEY')]) {
+            // compute stop flag here to avoid interpolating credentials
+            def stopFlag = params.STOP_APP ? 'true' : 'false'
             sh """
               set -e
               # ensure target dir exists
-              ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${remote} 'mkdir -p ${remoteDir}'
-              # sync workspace to remote (rsync recommended)
-              rsync -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" -av --delete $WORKSPACE/ ${remote}:${remoteDir}/
-              # run remote deploy commands
-              ssh -i $SSH_KEY -o StrictHostKeyChecking=no ${remote} <<'EOF'
-                set -e
-                cd ${remoteDir}
-                npm ci --no-audit --no-fund
-                if [ "${params.STOP_APP}" = "true" ]; then
-                  npm run stop || pkill -f "node app/server.js" || true
-                fi
-                # start app (detached)
-                nohup npm start > server.out.log 2>&1 &
-                sleep 2
-                echo "=== Remote app logs ==="
-                tail -n 20 server.out.log || true
-              EOF
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'mkdir -p ${remoteDir}'
+              # sync workspace to remote (do not preserve owner/group/permissions)
+              rsync -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" -rlptD --no-owner --no-group --no-perms --delete $WORKSPACE/ ${remote}:${remoteDir}/
+              # run remote deploy commands (single ssh command to avoid heredoc/indent issues)
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'cd ${remoteDir} && npm ci --no-audit --no-fund && if [ "${stopFlag}" = "true" ]; then npm run stop || pkill -f "node app/server.js" || true; fi && nohup npm start > server.out.log 2>&1 & sleep 2 && echo "=== Remote app logs ===" && tail -n 20 server.out.log || true'
             """
           }
         }
@@ -156,7 +145,7 @@ Test-NetConnection -ComputerName <VM_IP> -Port 3000
 
 ## 7) Logs & rollback
 - View logs:
-ssh -i jenkins-deploy-key deploy@<VM_IP> 'tail -n 200 /opt/node-app/server.out.log'
+ssh -i jenkins-deploy-key azureuser@<VM_IP> 'tail -n 200 /opt/node-app/server.out.log'
 ```
 - Rollback to a previous commit or tag:
 ```bash
