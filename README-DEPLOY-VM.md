@@ -80,7 +80,7 @@ pipeline {
     stage('Deploy to VM') {
       steps {
         script {
-          def remote = "deploy@${params.TARGET_IP}"
+          def remote = "azureuser@${params.TARGET_IP}"
           def remoteDir = "/opt/node-app"
           withCredentials([sshUserPrivateKey(credentialsId: 'deploy-to-vm', keyFileVariable: 'SSH_KEY')]) {
             sh """
