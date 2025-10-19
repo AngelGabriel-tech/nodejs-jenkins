@@ -18,7 +18,7 @@ This guide uses the included Node.js sample app as a hands-on scaffold to teach 
 - Administrator access to Jenkins to create jobs and configure plugins.
 - (Optional) A public GitHub account and repository fork of this project.
 - The sample project in this repo (or a fork/clone). The important files:
-  - `app/jenkins/Jenkinsfile` — sample pipeline
+  - ` ` — sample pipeline
   - `app/public` — static site used for demo triggers
   - `app/server.js` — small Express app exposing `/api/trigger-pipeline` and `/api/jenkinsfile`.
 
