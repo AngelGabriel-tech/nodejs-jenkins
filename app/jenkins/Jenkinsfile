@@ -1,53 +1,57 @@
 pipeline {
-    agent any
-
-    parameters {
-        booleanParam(name: 'STOP_APP', defaultValue: false, description: 'If true, pipeline will run the Stop stage after Start. Default: false')
+  agent any
+  parameters {
+    string(name: 'TARGET_IP', defaultValue: '172.212.218.66', description: 'Target VM IP or hostname')
+    booleanParam(name: 'STOP_APP', defaultValue: false, description: 'If true, stop the remote app after run')
+  }
+  stages {
+    stage('Deploy to VM') {
+      steps {
+        script {
+          def remote = "azureuser@${params.TARGET_IP}"
+          def remoteDir = "/opt/node-app"
+          withCredentials([sshUserPrivateKey(credentialsId: 'deploy-to-vm', keyFileVariable: 'SSH_KEY')]) {
+            // compute stop flag here to avoid interpolating credentials
+            def stopFlag = params.STOP_APP ? 'true' : 'false'
+            sh """
+              set -e
+              # ensure target dir exists
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'mkdir -p ${remoteDir}'
+              # sync workspace to remote (do not preserve owner/group/permissions)
+              rsync -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" -rlptD --no-owner --no-group --no-perms --delete $WORKSPACE/ ${remote}:${remoteDir}/
+              # run remote deploy commands (single ssh command to avoid heredoc/indent issues)
+              ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${remote} 'cd ${remoteDir} && npm ci --no-audit --no-fund && if [ "${stopFlag}" = "true" ]; then npm run stop || pkill -f "node app/server.js" || true; fi && nohup npm start > server.out.log 2>&1 & sleep 2 && echo "=== Remote app logs ===" && tail -n 20 server.out.log || true'
+            """
+          }
+        }
+      }
     }
 
-    tools {
-        nodejs 'nodejs-project'
+    stage('Remote Health Check') {
+      steps {
+        script {
+          def ip = params.TARGET_IP
+          sh """
+            set -e
+            for i in \$(seq 1 10); do
+              if curl -sS http://${ip}:3000/health | grep -q 'healthy'; then
+                echo 'Remote app is healthy'
+                exit 0
+              fi
+              echo 'Waiting for remote app...'
+              sleep 2
+            done
+            echo 'Remote app did not become healthy' >&2
+            exit 1
+          """
+        }
+      }
     }
+  }
 
-    stages {
-        stage('Install') {
-            steps {
-                echo 'Installing dependencies...'
-                sh 'npm install --no-audit --no-fund'
-            }
-        }
-
-        stage('Start') {
-            steps {
-                echo 'Starting the Node.js application...'
-                sh '''
-                    nohup npm start > server.log 2>&1 &
-                    sleep 3
-                    echo "=== Server log output ==="
-                    tail -n 20 server.log
-                '''
-            }
-        }
-
-        stage('Stop') {
-            when {
-                expression { return params.STOP_APP == true }
-            }
-            steps {
-                echo 'Stopping the Node.js application...'
-                sh '''
-                    npm stop || pkill -f "node app/server.js" || true
-                    echo "=== Server stopped successfully ==="
-                '''
-            }
-        }
+  post {
+    always {
+      echo 'Deploy finished; check remote logs if needed'
     }
-
-    post {
-        always {
-            echo 'Post-build: show a final log snapshot (no automatic stop)'
-            sh 'echo "--- Tail server.out.log (if present) ---" || true'
-            sh 'tail -n 30 server.out.log || tail -n 30 server.log || true'
-        }
-    }
+  }
 }
