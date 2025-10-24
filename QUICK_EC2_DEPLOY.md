@@ -19,7 +19,7 @@ Verify your package is published to Nexus:
 - Package: `nodejs-app@1.0.3` (includes HTTP routes)
 - Registry: `http://172.202.28.224:8081/repository/demo-npm-hosted/`
 
-## Deployment Steps
+## Deployment Steps to an Instance
 
 ## 1. Connect to EC2
 ```bash
