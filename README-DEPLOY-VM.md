@@ -191,3 +191,65 @@ If you use systemd, update the pipeline to `systemctl restart node-app` instead 
 - Add a stage to create the systemd unit on first deploy, then use `systemctl restart node-app` on subsequent deploys.
 
 If you want, I can patch the repo `Jenkinsfile` to use `TARGET_IP` and `deploy-to-vm` automatically. Just tell me to proceed.
+
+## 9) Webhook setup (GitHub → Jenkins) — end-to-end
+
+This section explains how to wire GitHub webhooks to your Jenkins instance so pushes automatically trigger the pipeline that deploys to the target VM.
+
+Summary of the steps:
+- Make Jenkins reachable by GitHub (public URL or use a tunnel / GitHub App).
+- Configure a webhook in the GitHub repository (Payload URL, content-type, optional secret).
+- Configure the Jenkins job to accept webhooks (Multibranch/Organization jobs usually work out-of-the-box; single Pipeline jobs can use the "Generic Webhook Trigger" plugin or the GitHub plugin).
+
+A. Ensure Jenkins is reachable from GitHub
+- Recommended: expose Jenkins via a domain with an HTTPS reverse proxy (e.g. nginx) and a valid certificate.
+- Quick options:
+  - Open port 8080 on the Jenkins host public IP and use http(s)://<JENKINS_HOST>:8080/github-webhook/
+  - Use a secure tunnel like ngrok for temporary testing: ngrok http 8080
+  - Use a GitHub App or a small relay service if you cannot make Jenkins publicly reachable.
+
+B. Create the webhook in GitHub
+1. In your GitHub repo, go to Settings → Webhooks → Add webhook
+2. Set:
+   - Payload URL: https://<JENKINS_HOST>/github-webhook/  (or http:// if you're testing without TLS)
+   - Content type: application/json
+   - Secret: (optional but recommended) — choose a token string and keep it safe
+   - Which events: usually "Just the push event" is enough; add PRs if you want builds on PRs
+3. Click "Add webhook". Use the "Recent Deliveries" UI to inspect requests and responses.
+
+C. Configure Jenkins to accept and handle the webhook
+- For Multibranch Pipeline or GitHub Organization jobs (recommended):
+  - Install the GitHub Branch Source plugin (usually part of the GitHub family plugins).
+  - Create a Multibranch Pipeline (or Organization) job that points at your GitHub repo/organization. Jenkins will automatically index branches and respond to webhooks.
+- For a single Pipeline job or if you want explicit control, use the Generic Webhook Trigger plugin:
+  1. Install the "Generic Webhook Trigger" plugin in Jenkins.
+  2. In your job configuration add the "Generic Webhook Trigger" build trigger.
+  3. Set a token (this should match the secret you configured in GitHub) and any payload variables you want to extract.
+  4. Save the job. The webhook will now trigger this job when GitHub delivers a matching request.
+
+D. Secret validation and CSRF
+- If you set a webhook secret in GitHub, configure the same token in the Generic Webhook Trigger or in your GitHub plugin configuration so Jenkins can validate the HMAC signature.
+- If Jenkins is rejecting webhook POSTs due to CSRF, check Manage Jenkins → Configure Global Security and the installed webhook/plugin docs. The Generic Webhook Trigger plugin is designed to work with HMAC secrets and avoid CSRF issues for webhook-triggered jobs.
+
+E. Troubleshooting
+- If webhook deliveries show non-200 responses in GitHub's "Recent Deliveries":
+  - Confirm the `Payload URL` is reachable from the Internet (use curl from a remote host).
+  - Check Jenkins log (Manage Jenkins → System Log) and access logs for incoming webhook hits.
+  - If you're using a reverse proxy, ensure it forwards the `/github-webhook/` path untouched and allows large payloads.
+  - If the job doesn't trigger: ensure the job has the appropriate trigger configured (Multibranch jobs typically do; Pipeline jobs need the GitHub trigger or Generic Webhook Trigger).
+
+F. Example webhook values (replace placeholders):
+ - Payload URL: https://jenkins.example.com/github-webhook/
+ - Content type: application/json
+ - Secret (example): s3cr3t-token-you-choose
+
+G. Security recommendations
+- Prefer HTTPS for the webhook endpoint and a reverse proxy in front of Jenkins.
+- Use a webhook secret and validate signatures in Jenkins (Generic Webhook Trigger or plugin support).
+- Limit which IPs can access your Jenkins endpoint via firewall or an allowlist if possible.
+
+H. If Jenkins is not publicly reachable
+- Use a tunnel (ngrok) for testing: `ngrok http 8080` and use the generated ngrok URL in the webhook.
+- For production, either expose Jenkins securely (HTTPS + auth) or use a GitHub App/Enterprise integration which can be installed into the organization and uses server-to-server hooks.
+
+If you want, I can add the exact Azure Portal / az CLI commands and a webhook URL example here (you mentioned you can provide those); or I can add an example Jenkins job configuration that uses the Generic Webhook Trigger with a token named `github-webhook-token`.
