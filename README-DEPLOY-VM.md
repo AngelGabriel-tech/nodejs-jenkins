@@ -217,7 +217,7 @@ B. Create the webhook in GitHub
    - Which events: usually "Just the push event" is enough; add PRs if you want builds on PRs
 3. Click "Add webhook". Use the "Recent Deliveries" UI to inspect requests and responses.
 
-C. Configure Jenkins to accept and handle the webhook
+C. Configure Jenkins to accept and handle the webhooks
 - For Multibranch Pipeline or GitHub Organization jobs (recommended):
   - Install the GitHub Branch Source plugin (usually part of the GitHub family plugins).
   - Create a Multibranch Pipeline (or Organization) job that points at your GitHub repo/organization. Jenkins will automatically index branches and respond to webhooks.
