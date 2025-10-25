@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, dev]
 
-workflow_dispatch: 
+  workflow_dispatch: 
 
 env:
   IMAGE_NAME: nodejs-jenkins
