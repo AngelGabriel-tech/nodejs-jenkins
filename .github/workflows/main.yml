@@ -51,4 +51,4 @@ jobs:
             docker pull ${{ env.IMAGE }}
             docker stop nodejs-jenkins || true
             docker rm nodejs-jenkins || true
-            docker run -d --name nodejs-jenkins -p 80:3000 ${{ env.IMAGE }}
+            docker run -d --name nodejs-jenkins -p 3000:3000 ${{ env.IMAGE }}
